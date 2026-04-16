@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>健康打卡APP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .app {
+            max-width: 414px;
+            height: 100vh;
+            margin: 0 auto;
+            background-color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+            color: #999;
+            cursor: pointer;
+        }
+        
+        .nav-item.active {
+            color: #4CAF50;
+        }
+        
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
+        }
+        
+        .content {
+            padding: 16px;
+            padding-bottom: 70px;
+        }
+        
+        .section {
+            margin-bottom: 24px;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 12px;
+        }
+        
+        .health-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .health-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .health-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #4CAF50;
+        }
+        
+        .health-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        .record-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 12px;
+            width: 100%;
+        }
+        
+        .record-btn:hover {
+            background-color: #45a049;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #666;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: white;
+        }
+        
+        .stats-container {
+            height: 200px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .stats-placeholder {
+            color: #999;
+            font-size: 14px;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 12px;
+            padding: 24px;
+            width: 90%;
+            max-width: 320px;
+        }
+        
+        .modal-header {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 24px;
+        }
+        
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .modal-btn.cancel {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        
+        .modal-btn.confirm {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            健康打卡
+        </div>
+        
+        <!-- 首页 -->
+        <div class="page active" id="home">
+            <div class="content">
+                <div class="section">
+                    <h2 class="section-title">今日健康数据</h2>
+                    <div class="card">
+                        <div class="health-card">
+                            <div class="health-item">
+                                <div class="health-value" id="calories">0</div>
+                                <div class="health-label">热量(千卡)</div>
+                            </div>
+                            <div class="health-item">
+                                <div class="health-value" id="exercise">0</div>
+                                <div class="health-label">运动(分钟)</div>
+                            </div>
+                            <div class="health-item">
+                                <div class="health-value" id="sleep">0</div>
+                                <div class="health-label">睡眠(小时)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2 class="section-title">快速记录</h2>
+                    <div class="card">
+                        <button class="record-btn" onclick="openRecordModal('food')">记录饮食</button>
+                        <button class="record-btn" onclick="openRecordModal('exercise')">记录运动</button>
+                        <button class="record-btn" onclick="openRecordModal('sleep')">记录睡眠</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2 class="section-title">本周趋势</h2>
+                    <div class="card">
+                        <div class="stats-container">
+                            <div class="stats-placeholder">数据可视化图表</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 记录页 -->
+        <div class="page" id="record">
+            <div class="content">
+                <div class="section">
+                    <h2 class="section-title">饮食记录</h2>
+                    <div class="card">
+                        <div class="form-group">
+                            <label class="form-label">餐次</label>
+                            <select class="form-select" id="mealType">
+                                <option value="breakfast">早餐</option>
+                                <option value="lunch">午餐</option>
+                                <option value="dinner">晚餐</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">食物名称</label>
+                            <input type="text" class="form-input" id="foodName" placeholder="请输入食物名称">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">热量(千卡)</label>
+                            <input type="number" class="form-input" id="foodCalories" placeholder="请输入热量">
+                        </div>
+                        <button class="record-btn" onclick="saveFoodRecord()">保存记录</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2 class="section-title">运动记录</h2>
+                    <div class="card">
+                        <div class="form-group">
+                            <label class="form-label">运动类型</label>
+                            <select class="form-select" id="exerciseType">
+                                <option value="running">跑步</option>
+                                <option value="walking">步行</option>
+                                <option value="swimming">游泳</option>
+                                <option value="other">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">时长(分钟)</label>
+                            <input type="number" class="form-input" id="exerciseDuration" placeholder="请输入时长">
+                        </div>
+                        <button class="record-btn" onclick="saveExerciseRecord()">保存记录</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2 class="section-title">睡眠记录</h2>
+                    <div class="card">
+                        <div class="form-group">
+                            <label class="form-label">睡眠时长(小时)</label>
+                            <input type="number" step="0.5" class="form-input" id="sleepDuration" placeholder="请输入睡眠时长">
+                        </div>
+                        <button class="record-btn" onclick="saveSleepRecord()">保存记录</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 数据页 -->
+        <div class="page" id="stats">
+            <div class="content">
+                <div class="section">
+                    <h2 class="section-title">健康数据统计</h2>
+                    <div class="card">
+                        <div class="stats-container">
+                            <div class="stats-placeholder">月度健康数据图表</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2 class="section-title">目标设定</h2>
+                    <div class="card">
+                        <div class="form-group">
+                            <label class="form-label">每日热量目标(千卡)</label>
+                            <input type="number" class="form-input" id="calorieGoal" placeholder="请输入目标">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">每日运动目标(分钟)</label>
+                            <input type="number" class="form-input" id="exerciseGoal" placeholder="请输入目标">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">每日睡眠目标(小时)</label>
+                            <input type="number" step="0.5" class="form-input" id="sleepGoal" placeholder="请输入目标">
+                        </div>
+                        <button class="record-btn" onclick="saveGoals()">保存目标</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 我的页 -->
+        <div class="page" id="profile">
+            <div class="content">
+                <div class="section">
+                    <h2 class="section-title">个人信息</h2>
+                    <div class="card">
+                        <div class="form-group">
+                            <label class="form-label">姓名</label>
+                            <input type="text" class="form-input" id="userName" placeholder="请输入姓名">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">年龄</label>
+                            <input type="number" class="form-input" id="userAge" placeholder="请输入年龄">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">性别</label>
+                            <select class="form-select" id="userGender">
+                                <option value="male">男</option>
+                                <option value="female">女</option>
+                            </select>
+                        </div>
+                        <button class="record-btn" onclick="saveProfile()">保存信息</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2 class="section-title">设置</h2>
+                    <div class="card">
+                        <button class="record-btn" onclick="clearData()">清除数据</button>
+                        <button class="record-btn" style="background-color: #f44336; margin-top: 12px;" onclick="logout()">退出登录</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 底部导航 -->
+        <div class="nav">
+            <div class="nav-item active" onclick="switchPage('home')">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                </svg>
+                <span>首页</span>
+            </div>
+            <div class="nav-item" onclick="switchPage('record')">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V9h14v10zM7 10h5v5H7z"/>
+                </svg>
+                <span>记录</span>
+            </div>
+            <div class="nav-item" onclick="switchPage('stats')">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99l1.5 1.5z"/>
+                </svg>
+                <span>数据</span>
+            </div>
+            <div class="nav-item" onclick="switchPage('profile')">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+                <span>我的</span>
+            </div>
+        </div>
+        
+        <!-- 记录模态框 -->
+        <div class="modal" id="recordModal">
+            <div class="modal-content">
+                <div class="modal-header" id="modalTitle">记录饮食</div>
+                <div class="form-group">
+                    <label class="form-label" id="modalLabel">食物名称</label>
+                    <input type="text" class="form-input" id="modalInput" placeholder="请输入">
+                </div>
+                <div class="modal-buttons">
+                    <button class="modal-btn cancel" onclick="closeModal()">取消</button>
+                    <button class="modal-btn confirm" onclick="confirmRecord()">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 模拟数据
+        let healthData = {
+            calories: 0,
+            exercise: 0,
+            sleep: 0,
+            records: []
+        };
+        
+        let currentRecordType = '';
+        
+        // 切换页面
+        function switchPage(pageId) {
+            // 隐藏所有页面
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // 显示选中页面
+            document.getElementById(pageId).classList.add('active');
+            
+            // 更新导航状态
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+        }
+        
+        // 打开记录模态框
+        function openRecordModal(type) {
+            currentRecordType = type;
+            const modal = document.getElementById('recordModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalLabel = document.getElementById('modalLabel');
+            const modalInput = document.getElementById('modalInput');
+            
+            if (type === 'food') {
+                modalTitle.textContent = '记录饮食';
+                modalLabel.textContent = '食物名称';
+                modalInput.placeholder = '请输入食物名称';
+            } else if (type === 'exercise') {
+                modalTitle.textContent = '记录运动';
+                modalLabel.textContent = '运动类型';
+                modalInput.placeholder = '请输入运动类型';
+            } else if (type === 'sleep') {
+                modalTitle.textContent = '记录睡眠';
+                modalLabel.textContent = '睡眠时长(小时)';
+                modalInput.placeholder = '请输入睡眠时长';
+            }
+            
+            modal.classList.add('active');
+        }
+        
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('recordModal').classList.remove('active');
+            document.getElementById('modalInput').value = '';
+        }
+        
+        // 确认记录
+        function confirmRecord() {
+            const input = document.getElementById('modalInput').value;
+            if (!input) return;
+            
+            // 模拟保存数据
+            if (currentRecordType === 'food') {
+                healthData.calories += 300; // 模拟添加热量
+                document.getElementById('calories').textContent = healthData.calories;
+            } else if (currentRecordType === 'exercise') {
+                healthData.exercise += 30; // 模拟添加运动时间
+                document.getElementById('exercise').textContent = healthData.exercise;
+            } else if (currentRecordType === 'sleep') {
+                healthData.sleep = parseFloat(input);
+                document.getElementById('sleep').textContent = healthData.sleep;
+            }
+            
+            closeModal();
+        }
+        
+        // 保存饮食记录
+        function saveFoodRecord() {
+            const mealType = document.getElementById('mealType').value;
+            const foodName = document.getElementById('foodName').value;
+            const calories = document.getElementById('foodCalories').value;
+            
+            if (foodName && calories) {
+                healthData.calories += parseInt(calories);
+                document.getElementById('calories').textContent = healthData.calories;
+                alert('饮食记录保存成功！');
+                document.getElementById('foodName').value = '';
+                document.getElementById('foodCalories').value = '';
+            }
+        }
+        
+        // 保存运动记录
+        function saveExerciseRecord() {
+            const exerciseType = document.getElementById('exerciseType').value;
+            const duration = document.getElementById('exerciseDuration').value;
+            
+            if (duration) {
+                healthData.exercise += parseInt(duration);
+                document.getElementById('exercise').textContent = healthData.exercise;
+                alert('运动记录保存成功！');
+                document.getElementById('exerciseDuration').value = '';
+            }
+        }
+        
+        // 保存睡眠记录
+        function saveSleepRecord() {
+            const duration = document.getElementById('sleepDuration').value;
+            
+            if (duration) {
+                healthData.sleep = parseFloat(duration);
+                document.getElementById('sleep').textContent = healthData.sleep;
+                alert('睡眠记录保存成功！');
+                document.getElementById('sleepDuration').value = '';
+            }
+        }
+        
+        // 保存目标
+        function saveGoals() {
+            const calorieGoal = document.getElementById('calorieGoal').value;
+            const exerciseGoal = document.getElementById('exerciseGoal').value;
+            const sleepGoal = document.getElementById('sleepGoal').value;
+            
+            if (calorieGoal && exerciseGoal && sleepGoal) {
+                alert('目标设置成功！');
+            }
+        }
+        
+        // 保存个人信息
+        function saveProfile() {
+            const userName = document.getElementById('userName').value;
+            const userAge = document.getElementById('userAge').value;
+            const userGender = document.getElementById('userGender').value;
+            
+            if (userName && userAge) {
+                alert('个人信息保存成功！');
+            }
+        }
+        
+        // 清除数据
+        function clearData() {
+            if (confirm('确定要清除所有数据吗？')) {
+                healthData = {
+                    calories: 0,
+                    exercise: 0,
+                    sleep: 0,
+                    records: []
+                };
+                document.getElementById('calories').textContent = '0';
+                document.getElementById('exercise').textContent = '0';
+                document.getElementById('sleep').textContent = '0';
+                alert('数据已清除！');
+            }
+        }
+        
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                alert('已退出登录！');
+            }
+        }
+    </script>
+</body>
+</html>
